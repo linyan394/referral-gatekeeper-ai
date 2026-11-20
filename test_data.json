@@ -1,0 +1,12 @@
+{
+  "patient": {
+    "age": 22,
+    "gender": "unknown",
+    "chief_complaint": "受凉后咽痛1天，伴轻微流涕",
+    "present_illness": "昨天受凉后出现嗓子疼，轻微流鼻涕，无发烧",
+    "past_history": "既往体健",
+    "vital_signs": {}
+  },
+  "target_hospital": "县人民医院",
+  "notes": "感冒症状"
+}

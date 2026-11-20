@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>转诊守门人AI智能体</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: "Microsoft YaHei", sans-serif; background: #f0f4f8; color: #333; }
+.header { background: linear-gradient(135deg, #1a73e8, #0d47a1); color: #fff; padding: 24px 0; text-align: center; }
+.header h1 { font-size: 26px; margin-bottom: 6px; }
+.header p { font-size: 14px; opacity: 0.9; }
+.container { max-width: 900px; margin: 30px auto; padding: 0 20px; }
+.card { background: #fff; border-radius: 12px; padding: 28px; margin-bottom: 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+.card h2 { font-size: 18px; margin-bottom: 18px; color: #1a73e8; border-left: 4px solid #1a73e8; padding-left: 10px; }
+.form-row { display: flex; gap: 16px; margin-bottom: 16px; flex-wrap: wrap; }
+.form-group { flex: 1; min-width: 200px; }
+.form-group label { display: block; font-size: 13px; color: #666; margin-bottom: 6px; font-weight: 600; }
+.form-group input, .form-group select, .form-group textarea {
+  width: 100%; padding: 10px 12px; border: 1px solid #d0d7de; border-radius: 8px; font-size: 14px; outline: none; transition: border-color 0.2s;
+}
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: #1a73e8; }
+.form-group textarea { resize: vertical; min-height: 70px; }
+.btn-submit {
+  width: 100%; padding: 14px; background: linear-gradient(135deg, #1a73e8, #0d47a1); color: #fff; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: opacity 0.2s;
+}
+.btn-submit:hover { opacity: 0.9; }
+.btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+.result { display: none; }
+.badge { display: inline-block; padding: 4px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; }
+.badge-green { background: #e6f4ea; color: #137333; }
+.badge-orange { background: #fef7e0; color: #b06000; }
+.badge-red { background: #fce8e6; color: #c5221f; }
+.dept-item { border: 1px solid #e0e0e0; border-radius: 8px; padding: 14px 16px; margin-bottom: 10px; }
+.dept-item .dept-name { font-size: 16px; font-weight: 700; color: #1a73e8; }
+.dept-item .dept-score { float: right; font-size: 13px; color: #888; }
+.dept-item ul { margin: 8px 0 0 20px; font-size: 13px; color: #555; }
+.dept-item li { margin-bottom: 4px; }
+.check-item { padding: 8px 0; border-bottom: 1px dashed #e0e0e0; font-size: 14px; }
+.check-item:last-child { border-bottom: none; }
+.check-tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; margin-right: 8px; }
+.tag-high { background: #fce8e6; color: #c5221f; }
+.tag-medium { background: #fef7e0; color: #b06000; }
+.tag-low { background: #e8f0fe; color: #1a73e8; }
+.summary-box { background: #f8f9fa; border-radius: 8px; padding: 16px; font-size: 14px; line-height: 1.8; color: #444; }
+.disclaimer { font-size: 12px; color: #999; margin-top: 16px; padding: 10px; background: #fff8e1; border-radius: 6px; }
+.loading { text-align: center; padding: 40px; color: #1a73e8; font-size: 15px; }
+.spinner { display: inline-block; width: 28px; height: 28px; border: 3px solid #e0e0e0; border-top-color: #1a73e8; border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 10px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.error { background: #fce8e6; color: #c5221f; padding: 14px; border-radius: 8px; font-size: 14px; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>转诊守门人AI智能体</h1>
+  <p>该不该转 / 往哪里转 / 转之前必须排除什么 —— 最终决策权归属医生</p>
+</div>
+<div class="container">
+  <div class="card">
+    <h2>患者信息录入</h2>
+    <div class="form-row">
+      <div class="form-group">
+        <label>年龄 *</label>
+        <input type="number" id="age" value="22" min="0" max="150" placeholder="请输入年龄">
+      </div>
+      <div class="form-group">
+        <label>性别</label>
+        <select id="gender"><option value="unknown">未知</option><option value="male">男</option><option value="female">女</option></select>
+      </div>
+    </div>
+    <div class="form-group" style="margin-bottom:16px;">
+      <label>主诉（主要症状）*</label>
+      <input type="text" id="chief" placeholder="如：受凉后咽痛1天，伴轻微流涕" value="受凉后咽痛1天，伴轻微流涕">
+    </div>
+    <div class="form-group" style="margin-bottom:16px;">
+      <label>现病史</label>
+      <textarea id="illness" placeholder="病情发展经过、伴随症状等">昨天受凉后出现嗓子疼，轻微流鼻涕，无发烧，精神状态良好</textarea>
+    </div>
+    <div class="form-group" style="margin-bottom:16px;">
+      <label>既往史</label>
+      <input type="text" id="history" placeholder="如：高血压、糖尿病等，无则填既往体健" value="既往体健">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>目标医院 *</label>
+        <select id="hospital">
+          <option value="北京协和医院">北京协和医院</option>
+          <option value="上海瑞金医院">上海瑞金医院</option>
+          <option value="四川大学华西医院">四川大学华西医院</option>
+          <option value="中山大学附属第一医院">中山大学附属第一医院</option>
+          <option value="省人民医院">省人民医院</option>
+          <option value="市中心医院">市中心医院</option>
+          <option value="市第一人民医院">市第一人民医院</option>
+          <option value="县人民医院" selected>县人民医院</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>转诊原因</label>
+        <input type="text" id="reason" placeholder="简要说明转诊原因">
+      </div>
+    </div>
+    <button class="btn-submit" id="btnEval" type="button">开始转诊评估</button>
+  </div>
+  <div id="resultArea" class="result"></div>
+</div>
+<script>
+(function() {
+  var btn = document.getElementById('btnEval');
+  var area = document.getElementById('resultArea');
+
+  btn.addEventListener('click', function() {
+    var age = parseInt(document.getElementById('age').value, 10);
+    var chief = document.getElementById('chief').value.trim();
+    var hospital = document.getElementById('hospital').value;
+
+    if (!age || age < 0 || !chief || !hospital) {
+      alert('请填写年龄、主诉和目标医院');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = '评估中，请稍候...';
+    area.style.display = 'block';
+    area.innerHTML = '<div class="card"><div class="loading"><div class="spinner"></div><br>智能体正在分析病情...</div></div>';
+
+    var body = {
+      patient: {
+        age: age,
+        gender: document.getElementById('gender').value,
+        chief_complaint: chief,
+        present_illness: document.getElementById('illness').value.trim(),
+        past_history: document.getElementById('history').value.trim(),
+        vital_signs: {}
+      },
+      target_hospital: hospital,
+      notes: document.getElementById('reason').value.trim()
+    };
+
+    fetch('/api/v1/referral/evaluate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    }).then(function(resp) {
+      if (!resp.ok) {
+        return resp.json().then(function(err) {
+          throw new Error(err.detail || '评估失败，错误码: ' + resp.status);
+        });
+      }
+      return resp.json();
+    }).then(function(report) {
+      renderReport(report);
+    }).catch(function(e) {
+      area.innerHTML = '<div class="card"><div class="error">出错了: ' + e.message + '<br><br>请确认服务正在运行（终端执行 python main.py）</div></div>';
+    }).finally(function() {
+      btn.disabled = false;
+      btn.textContent = '开始转诊评估';
+    });
+  });
+
+  function urgencyBadge(level) {
+    var map = {
+      routine: ['badge-green', '常规'],
+      urgent: ['badge-orange', '24小时内'],
+      emergency: ['badge-red', '立即急诊']
+    };
+    var m = map[level] || map.routine;
+    return '<span class="badge ' + m[0] + '">' + m[1] + '</span>';
+  }
+
+  function renderReport(r) {
+    var d = r.decision;
+    var html = '<div class="card"><h2>评估报告</h2>';
+    html += '<p style="font-size:12px;color:#999;margin-bottom:14px;">请求编号: ' + r.request_id + '</p>';
+    html += '<div style="margin-bottom:16px;"><b>转诊决策: </b>';
+    html += d.should_refer ? '<span class="badge badge-orange">建议转诊</span> ' : '<span class="badge badge-green">可基层处理</span> ';
+    html += urgencyBadge(d.urgency_level) + '</div>';
+    html += '<p style="font-size:14px;color:#555;margin-bottom:8px;">' + d.rationale + '</p>';
+    if (d.risks_if_delayed && d.risks_if_delayed.length) {
+      html += '<p style="font-size:13px;color:#c5221f;">延误风险: ' + d.risks_if_delayed.join('; ') + '</p>';
+    }
+    html += '</div>';
+
+    if (r.recommendations && r.recommendations.length) {
+      html += '<div class="card"><h2>推荐科室</h2>';
+      for (var i = 0; i < r.recommendations.length; i++) {
+        var rec = r.recommendations[i];
+        html += '<div class="dept-item"><span class="dept-name">' + rec.department + '</span><span class="dept-score">匹配度 ' + Math.round(rec.score * 100) + '% / 置信度: ' + rec.confidence + '</span>';
+        if (rec.reasons && rec.reasons.length) {
+          html += '<ul>';
+          for (var j = 0; j < rec.reasons.length; j++) {
+            html += '<li>' + rec.reasons[j] + '</li>';
+          }
+          html += '</ul>';
+        }
+        if (!rec.available_at_target) {
+          html += '<p style="color:#c5221f;font-size:12px;margin-top:6px;">注意: 目标医院可能无此科室</p>';
+        }
+        html += '</div>';
+      }
+      html += '</div>';
+    }
+
+    if (r.pre_referral_checks && r.pre_referral_checks.length) {
+      html += '<div class="card"><h2>转诊前必查项</h2>';
+      for (var k = 0; k < r.pre_referral_checks.length; k++) {
+        var c = r.pre_referral_checks[k];
+        var tagText = c.severity === 'high' ? '高优先' : (c.severity === 'medium' ? '中优先' : '低优先');
+        html += '<div class="check-item"><span class="check-tag tag-' + c.severity + '">' + tagText + '</span><b>' + c.item + '</b> - ' + c.reason + '</div>';
+      }
+      html += '</div>';
+    }
+
+    if (r.summary) {
+      html += '<div class="card"><h2>综合建议</h2><div class="summary-box">' + r.summary + '</div></div>';
+    }
+
+    html += '<div class="disclaimer">' + r.disclaimer + '</div>';
+    area.innerHTML = html;
+  }
+})();
+</script>
+</body>
+</html>

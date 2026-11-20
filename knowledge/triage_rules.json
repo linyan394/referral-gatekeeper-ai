@@ -1,0 +1,134 @@
+{
+  "referral_criteria": {
+    "should_refer_conditions": [
+      "病情超出基层医疗机构诊疗能力",
+      "需要特殊检查设备（CT、MRI、造影等）",
+      "需要专科手术评估",
+      "诊断不明且病情进展",
+      "治疗效果不佳需调整方案",
+      "危重急症需高级生命支持"
+    ],
+    "local_manageable_conditions": [
+      "上呼吸道感染",
+      "轻度高血压（血压<160/100）",
+      "2型糖尿病血糖控制可",
+      "轻度胃肠炎",
+      "稳定期慢病随访",
+      "常见皮肤病"
+    ]
+  },
+  "urgency_rules": [
+    {
+      "level": "emergency",
+      "description": "立即转诊（争分夺秒）",
+      "triggers": [
+        "生命体征不稳定", "急性心梗可能", "急性脑卒中可能",
+        "严重外伤", "大出血", "休克表现", "意识障碍进行性加重",
+        "呼吸困难需辅助通气", "主动脉夹层可能"
+      ],
+      "time_window": "立即，120转运"
+    },
+    {
+      "level": "urgent",
+      "description": "24小时内转诊",
+      "triggers": [
+        "诊断不明但生命体征稳定", "需尽快完善专科检查",
+        "症状进行性加重", "需专科评估治疗方案",
+        "基层治疗效果不佳"
+      ],
+      "time_window": "24小时内"
+    },
+    {
+      "level": "routine",
+      "description": "常规转诊（择期）",
+      "triggers": [
+        "稳定期慢病需专科评估", "择期手术评估",
+        "专科随访", "康复指导"
+      ],
+      "time_window": "1-2周内预约"
+    }
+  ],
+  "pre_referral_checks": [
+    {
+      "applies_to_symptoms": ["胸痛", "胸闷", "心悸"],
+      "checks": [
+        {"item": "心电图", "reason": "排除急性心肌梗死及恶性心律失常", "severity": "high"},
+        {"item": "心肌酶谱/肌钙蛋白", "reason": "排除急性心肌损伤", "severity": "high"},
+        {"item": "血压及双侧血压对比", "reason": "排除主动脉夹层", "severity": "high"}
+      ]
+    },
+    {
+      "applies_to_symptoms": ["头痛", "头晕", "偏瘫", "言语不清", "口角歪斜"],
+      "checks": [
+        {"item": "头颅CT", "reason": "鉴别出血性卒中与缺血性卒中", "severity": "high"},
+        {"item": "血糖检测", "reason": "排除低血糖导致的神经症状", "severity": "high"},
+        {"item": "血压评估", "reason": "评估是否高血压急症", "severity": "medium"}
+      ]
+    },
+    {
+      "applies_to_symptoms": ["腹痛", "呕血", "黑便", "便血"],
+      "checks": [
+        {"item": "血常规及血红蛋白", "reason": "评估出血程度及是否需紧急输血", "severity": "high"},
+        {"item": "腹部立位平片或CT", "reason": "排除消化道穿孔、肠梗阻", "severity": "high"},
+        {"item": "血淀粉酶/脂肪酶", "reason": "排除急性胰腺炎", "severity": "high"}
+      ]
+    },
+    {
+      "applies_to_symptoms": ["呼吸困难", "咯血", "咳嗽"],
+      "checks": [
+        {"item": "胸部影像学检查", "reason": "排除气胸、大量胸腔积液、肺栓塞", "severity": "high"},
+        {"item": "血氧饱和度监测", "reason": "评估呼吸衰竭风险", "severity": "high"},
+        {"item": "D-二聚体", "reason": "排除肺栓塞可能", "severity": "medium"}
+      ]
+    },
+    {
+      "applies_to_symptoms": ["阴道出血", "停经", "下腹痛"],
+      "checks": [
+        {"item": "尿/血HCG", "reason": "排除异位妊娠破裂", "severity": "high"},
+        {"item": "盆腔超声", "reason": "评估宫内/宫外妊娠及附件情况", "severity": "high"},
+        {"item": "血常规", "reason": "评估失血程度", "severity": "medium"}
+      ]
+    },
+    {
+      "applies_to_symptoms": ["意识障碍", "抽搐", "晕厥"],
+      "checks": [
+        {"item": "指尖血糖", "reason": "排除低血糖昏迷", "severity": "high"},
+        {"item": "电解质检查", "reason": "排除严重电解质紊乱", "severity": "high"},
+        {"item": "头颅CT", "reason": "排除颅内病变", "severity": "high"}
+      ]
+    },
+    {
+      "applies_to_symptoms": ["血尿", "少尿", "无尿", "水肿"],
+      "checks": [
+        {"item": "肾功能及电解质", "reason": "评估急性肾损伤及高钾血症风险", "severity": "high"},
+        {"item": "泌尿系超声", "reason": "排除梗阻性肾病", "severity": "medium"}
+      ]
+    },
+    {
+      "applies_to_symptoms": ["外伤", "骨折", "关节痛"],
+      "checks": [
+        {"item": "X线/CT影像", "reason": "明确骨折部位及移位情况", "severity": "medium"},
+        {"item": "神经血管评估", "reason": "排除合并神经血管损伤", "severity": "high"}
+      ]
+    }
+  ],
+  "age_specific_rules": {
+    "pediatric": {
+      "age_range": [0, 14],
+      "rule": "14岁以下患者优先推荐儿科，除非症状明确指向成人专科（如眼科外伤）",
+      "override_departments": ["眼科", "耳鼻喉科", "口腔科"]
+    },
+    "geriatric": {
+      "age_range": [65, 120],
+      "rule": "65岁以上多病共存患者可考虑老年医学科综合评估，单一明确专科问题仍推荐相应专科",
+      "prefer_departments": ["老年医学科"]
+    }
+  },
+  "gender_specific_rules": {
+    "female_reproductive": {
+      "applies_to": ["female"],
+      "keywords": ["阴道", "月经", "妊娠", "产科", "妇科", "子宫", "卵巢", "盆腔"],
+      "rule": "涉及女性生殖系统症状优先推荐妇产科"
+    }
+  }
+}
