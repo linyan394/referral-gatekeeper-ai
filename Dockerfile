@@ -10,5 +10,5 @@ COPY . .
 # DevCloud 仅路由容器 8080 端口
 EXPOSE 8080
 
-# 绑定 0.0.0.0:8080，生产模式无 reload
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
+# Railway 等平台会注入 PORT 环境变量，config.py 中已有 PORT > 8080 的回退逻辑
+CMD ["python", "main.py"]
