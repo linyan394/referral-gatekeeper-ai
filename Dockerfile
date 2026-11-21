@@ -1,14 +1,18 @@
 FROM python:3.12-slim
 
-WORKDIR /app
+# Hugging Face Spaces 标准配置：非root用户
+RUN useradd -m -u 1000 user
+USER user
+ENV HOME=/home/user
+WORKDIR $HOME/app
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+COPY --chown=user requirements.txt .
+RUN pip install --no-cache-dir --user -r requirements.txt
 
-COPY . .
+COPY --chown=user . .
 
-# DevCloud 仅路由容器 8080 端口
-EXPOSE 8080
+# HF Spaces 要求监听 7860 端口（config.py 优先读取 GATEKEEPER_PORT）
+ENV GATEKEEPER_PORT=7860
+EXPOSE 7860
 
-# Railway 等平台会注入 PORT 环境变量，config.py 中已有 PORT > 8080 的回退逻辑
 CMD ["python", "main.py"]
