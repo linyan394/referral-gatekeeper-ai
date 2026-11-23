@@ -206,7 +206,7 @@ function validateTargetHospital(hospitalName, recommendations) {
 }
 
 // ============ Step 4: 智能体编排（agent） ============
-function evaluate() {
+function startEvaluation() {
   const age = parseInt(document.getElementById("age").value);
   if (isNaN(age)) { alert("请填写患者年龄"); return; }
   const complaint = document.getElementById("complaint").value.trim();
