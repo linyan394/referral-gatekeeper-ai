@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>转诊守门人AI智能体</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:"Microsoft YaHei",sans-serif; background:#f0f6f4; color:#1a3a3a; min-height:100vh; display:flex; flex-direction:column; }
+header { background:linear-gradient(135deg,#0d6e5f,#11856e); color:#fff; padding:24px 16px; text-align:center; }
+header h1 { font-size:1.5em; letter-spacing:2px; }
+header p { font-size:.85em; opacity:.9; margin-top:6px; }
+main { flex:1; width:100%; max-width:900px; margin:0 auto; padding:24px 16px; }
+.card { background:#fff; border-radius:12px; box-shadow:0 2px 12px rgba(13,110,95,.12); padding:20px; margin-bottom:20px; }
+.card h2 { font-size:1.05em; color:#0d6e5f; border-left:4px solid #11856e; padding-left:10px; margin-bottom:14px; }
+.grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+label { display:block; font-size:.85em; margin-bottom:4px; color:#33665c; }
+input, select, textarea { width:100%; padding:9px 10px; border:1px solid #bcd6cf; border-radius:8px; font-size:.9em; font-family:inherit; background:#fbfefe; }
+input:focus, select:focus, textarea:focus { outline:none; border-color:#11856e; box-shadow:0 0 0 3px rgba(17,133,110,.15); }
+textarea { min-height:70px; resize:vertical; }
+.full { grid-column:1 / -1; }
+button { width:100%; padding:13px; background:linear-gradient(135deg,#0d6e5f,#11856e); color:#fff; border:none; border-radius:10px; font-size:1.05em; font-weight:bold; cursor:pointer; letter-spacing:4px; }
+button:hover { filter:brightness(1.1); }
+#result { display:none; }
+.tag { display:inline-block; padding:2px 10px; border-radius:20px; font-size:.75em; margin-right:6px; }
+.tag.emergency { background:#ffebee; color:#c62828; border:1px solid #ef9a9a; }
+.tag.urgent { background:#fff3e0; color:#e65100; border:1px solid #ffcc80; }
+.tag.routine { background:#e8f5e9; color:#2e7d32; border:1px solid #a5d6a7; }
+.rpt-block { border:1px solid #d4e9e2; border-radius:10px; padding:14px; margin-bottom:12px; background:#f8fdfb; }
+.rpt-block h3 { font-size:.95em; color:#0d6e5f; margin-bottom:8px; }
+.rpt-block ul { padding-left:20px; font-size:.9em; line-height:1.7; }
+.dept-item { border-left:3px solid #11856e; padding:8px 12px; margin:8px 0; background:#fff; border-radius:0 8px 8px 0; box-shadow:0 1px 4px rgba(0,0,0,.06); }
+.dept-item .score { float:right; color:#0d6e5f; font-weight:bold; }
+.dept-item .reason { font-size:.82em; color:#57736b; margin-top:4px; }
+.high { border-left:3px solid #c62828; }
+#summary { background:#eef7f4; border:1px dashed #11856e; border-radius:10px; padding:14px; font-size:.92em; line-height:1.8; }
+.warn { background:#fff3e0; border:1px solid #ffb74d; border-radius:10px; padding:12px; margin-bottom:12px; font-size:.88em; color:#b26a00; }
+footer { background:#e6f0ed; color:#57736b; text-align:center; padding:16px; font-size:.8em; line-height:1.8; margin-top:auto; }
+footer .disclaimer { color:#c62828; font-weight:bold; }
+@media(max-width:600px){ .grid{grid-template-columns:1fr;} }
+</style>
+</head>
+<body>
+<header>
+<h1>🏥 转诊守门人 AI 智能体</h1>
+<p>基层医生转诊决策安全校验 · 该不该转 · 往哪里转 · 转之前必须排除什么</p>
+</header>
+<main>
+<div class="card" id="form-card">
+<h2>📋 患者信息与转诊请求</h2>
+<div class="grid">
+<div><label>患者年龄</label><input type="number" id="age" min="0" max="120" placeholder="如：65"></div>
+<div><label>性别</label><select id="gender"><option value="male">男</option><option value="female">女</option></select></div>
+<div class="full"><label>主诉与现病史（症状描述）</label><textarea id="complaint" placeholder="如：持续胸痛2小时，伴大汗、气短"></textarea></div>
+<div class="full"><label>既往史（慢病、手术等）</label><input type="text" id="history" placeholder="如：高血压10年，糖尿病5年"></div>
+<div class="full"><label>生命体征（可选，如：血压160/100 心率110 血氧92）</label><input type="text" id="vitals" placeholder="选填，如：血压 160/100，心率 110"></div>
+<div class="full"><label>目标医院</label><input type="text" id="hospital" placeholder="如：北京协和医院 / 省人民医院 / 县人民医院"></div>
+</div>
+<p style="margin-top:14px"><button onclick="evaluate()">开始转诊评估</button></p>
+</div>
+<div id="result">
+<div class="card">
+<h2>📑 转诊评估报告</h2>
+<div id="rpt"></div>
+</div>
+<div class="card" style="text-align:center">
+<button style="background:linear-gradient(135deg,#57736b,#3d6156)" onclick="location.reload()">🔄 评估下一位患者</button>
+</div>
+</div>
+</main>
+<footer>
+本工具为基层医生转诊决策辅助工具，不构成医疗建议<br>
+<span class="disclaimer">最终决策权和医疗责任始终归属于医生</span><br>
+© 转诊守门人AI智能体 v1.0
+</footer>
+<script src="knowledge.js"></script>
+<script src="engine.js"></script>
+</body>
+</html>
