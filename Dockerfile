@@ -11,8 +11,7 @@ RUN pip install --no-cache-dir --user -r requirements.txt
 
 COPY --chown=user . .
 
-# HF Spaces 要求监听 7860 端口（config.py 优先读取 GATEKEEPER_PORT）
-ENV GATEKEEPER_PORT=7860
-EXPOSE 7860
+# Railway 等平台注入 PORT 环境变量，config.py 自动读取（优先级 GATEKEEPER_PORT > PORT > 8080）
+EXPOSE 8080
 
 CMD ["python", "main.py"]
